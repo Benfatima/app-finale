@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Base de données </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bdd.css') }}">
+    <style>
+    /* Hide the default checkbox */
+    .container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+    
+    .container {
+      display: block;
+      position: relative;
+      cursor: pointer;
+      font-size: 1.3rem;
+      user-select: none;
+    }
+    
+    /* Create a custom checkbox */
+    .checkmark {
+      --clr: #32ca9a;
+      position: relative;
+      top: 0;
+      left: 0;
+      height: 1.1em;
+      width: 1.1em;
+      background-color: #ccc;
+      border-radius: 50%;
+      transition: 300ms;
+    }
+    
+    /* When the checkbox is checked, add a blue background */
+    .container input:checked ~ .checkmark {
+      background-color: var(--clr);
+      border-radius: .5rem;
+      animation: pulse 500ms ease-in-out;
+    }
+    
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+    
+    /* Show the checkmark when checked */
+    .container input:checked ~ .checkmark:after {
+      display: block;
+    }
+    
+    /* Style the checkmark/indicator */
+    .container .checkmark:after {
+      left: 0.45em;
+      top: 0.25em;
+      width: 0.25em;
+      height: 0.5em;
+      border: solid #E0E0E2;
+      border-width: 0 0.15em 0.15em 0;
+      transform: rotate(45deg);
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 #20cf9890;
+        rotate: 20deg;
+      }
+    
+      50% {
+        rotate: -20deg;
+      }
+    
+      75% {
+        box-shadow: 0 0 0 10px #19cf9560;
+      }
+    
+      100% {
+        box-shadow: 0 0 0 13px #1ad49930;
+        rotate: 0;
+      }
+    }
+</style>
+</head>
+
+<body>
+    <h1>Liste des benchmarks personnalisés</h1>
+    <p style="text-align: center;">Veuillez séléctionner les instances avec quoi voulez vous générer un graphe comparatif:</p> <br>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom du benchmark </th>
+                <th>Nombre d'objets</th>
+                <th>Capacité des bacs</th>
+                <th>Dimensions des objets</th>
+                <th>champs de selection</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for benchmark in benchmarks_perso %}
+            <tr>
+                <td>{{ benchmark[0] }}</td>
+                <td>{{ benchmark[1] }}</td>
+                <td>{{ benchmark[2] }}</td>
+                <td>{{ benchmark[3] }}</td>
+                <td><label class="container">
+                    <input  type="checkbox" name="selected_benchmarks" value="{{ benchmark[3] }}">
+                    <div class="checkmark"></div>
+                  </label></td>
+                
+                <td>
+                    <!-- Boutons pour sélectionner et supprimer -->
+                    
+                </td>
+                
+            </tr>
+            {% endfor %}
+            
+        </tbody>
+        
+    </table>
+<BR>
+    <button onclick="genererGraphe1()"  style="margin-left: 40%;">Récupérer les benchmarks sélectionnés</button>
+    <script>
+        function genererGraphe1() {
+    // Récupérer les identifiants des benchmarks sélectionnés
+    var casesCochees = document.querySelectorAll('input[name="selected_benchmarks"]:checked');
+    var benchmarksSelectionnes = [];
+    for (var i = 0; i < casesCochees.length; i++) {
+        benchmarksSelectionnes.push(casesCochees[i].value);
+    }
+    console.log(benchmarksSelectionnes);
+    
+    // Envoyer les identifiants des benchmarks sélectionnés au serveur
+    
+    fetch('/generer_graphe1', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ selected_benchmarks: benchmarksSelectionnes })
+    })
+    .then(response => {
+        if (response.ok) {
+            // Mettre à jour l'image du graphe lorsque la réponse du serveur est réussie
+        var largeur = 600; // Largeur de la fenêtre en pixels
+        var hauteur = 400; // Hauteur de la fenêtre en pixels
+        var left = (screen.width - largeur) / 2; // Position horizontale centrée
+        var top = (screen.height - hauteur) / 2; // Position verticale centrée
+        window.open('afficher_graphe.html', 'fenetre1', 'width=' + largeur + ', height=' + hauteur + ', left=' + left + ', top=' + top);
+        
+        
+        } else {
+            console.error('Erreur lors de la génération du graphe');
+        }
+    })
+    .catch(error => console.error('Erreur :', error));
+    
+        
+}
+
+        function supprimerLigne(bouton) {
+            // Récupérer la ligne à supprimer
+            var ligneASupprimer = bouton.closest("tr");
+            // Supprimer la ligne de la table
+            ligneASupprimer.remove();
+            /* cas ou on veut supprimer le benchmark de la base de données
+             // Récupérer les informations de la ligne à supprimer
+            var nombreObjets = bouton.getAttribute("data-nombre-objets");
+            var capaciteBin = bouton.getAttribute("data-capacite-bin");
+            var dimensionsObjets = bouton.getAttribute("data-dimensions-objets");
+    
+            // Envoyer les informations au serveur Flask via une requête AJAX
+            $.ajax({
+                type: "POST",
+                url: "/supprimer-element", // URL de la route Flask pour la suppression
+                data: {
+                    nombreObjets: nombreObjets,
+                    capaciteBin: capaciteBin,
+                    dimensionsObjets: dimensionsObjets
+                },
+                success: function (response) {
+                    // Traiter la réponse du serveur si nécessaire
+                    console.log(response);
+                    // Supprimer la ligne de la table HTML
+                    var ligneASupprimer = bouton.closest("tr");
+                    ligneASupprimer.remove();
+                },
+                error: function (error) {
+                    // Gérer les erreurs
+                    console.error("Erreur lors de la suppression :", error);
+                }
+            });
+        } */
+        }
+    </script>
+    </body>
+
+    </html>

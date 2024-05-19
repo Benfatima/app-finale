@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
+</head>
+
+<body class="body1">
+
+    <img id="graphe" src="" alt="Graphe" style="width: 530px; height: auto;display: none;margin-bottom: 10%;margin-left: 5%;">
+</body>
+
+<script>
+   function genererGraphe(){
+        var image = document.getElementById('graphe');
+        document.getElementById('graphe').src = '/graph_image';
+        document.getElementById('graphe').style.display = "block";
+        fetch('/generer_graphe1')
+            .then(response => {
+                if (response.ok) {
+                    return response.blob(); // Récupérer les données de l'image en tant que blob
+                } else {
+                    console.error('Erreur lors de la génération du graphe');
+                }
+            })
+            .then(blob => {
+                image.src = URL.createObjectURL(blob); // Définir la source de l'image à partir du blob
+                image.style.display = "block"; // Afficher l'image une fois que la source est définie
+            })
+            .catch(error => console.error('Erreur :', error));
+    }
+
+    window.addEventListener('load', function() {
+        // Appeler la fonction pour générer le graphe dès que la fenêtre est chargée
+        genererGraphe();
+    });
+</script>
+
+</html>
